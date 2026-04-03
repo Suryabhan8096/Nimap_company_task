@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Document Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: white; padding: 18px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        header h1 { font-size: 22px; font-weight: 600; }
+        #user-info { display: flex; align-items: center; gap: 12px; }
+        #user-info span { font-size: 14px; opacity: 0.9; }
+        .btn {
+            padding: 8px 18px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s;
+        }
+        .btn-primary { background: #42a5f5; color: white; }
+        .btn-primary:hover { background: #1e88e5; }
+        .btn-danger { background: #ef5350; color: white; }
+        .btn-danger:hover { background: #e53935; }
+        .btn-success { background: #66bb6a; color: white; }
+        .btn-success:hover { background: #43a047; }
+        .btn-secondary { background: #78909c; color: white; }
+        .btn-secondary:hover { background: #546e7a; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+        /* Auth Section */
+        #auth-section {
+            max-width: 400px; margin: 80px auto; background: white;
+            border-radius: 12px; padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        #auth-section h2 { text-align: center; margin-bottom: 25px; color: #1a237e; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px 14px; border: 1.5px solid #ddd;
+            border-radius: 8px; font-size: 14px; transition: border 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #42a5f5; outline: none; }
+        #auth-section .btn { width: 100%; padding: 12px; font-size: 15px; margin-top: 5px; }
+        .auth-toggle { text-align: center; margin-top: 15px; font-size: 13px; }
+        .auth-toggle a { color: #1e88e5; cursor: pointer; text-decoration: underline; }
+
+        /* Main App */
+        #app-section { display: none; max-width: 1000px; margin: 25px auto; padding: 0 20px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0; margin-bottom: 25px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .tab {
+            flex: 1; padding: 14px; text-align: center; cursor: pointer;
+            font-weight: 600; font-size: 14px; color: #777;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab:hover { color: #1a237e; background: #f5f7ff; }
+        .tab.active { color: #1a237e; border-bottom-color: #1a237e; background: #f5f7ff; }
+
+        /* Cards */
+        .card {
+            background: white; border-radius: 10px; padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px;
+        }
+        .card h3 { margin-bottom: 18px; color: #1a237e; font-size: 17px; }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed #bbb; border-radius: 10px; padding: 35px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            margin-bottom: 15px; background: #fafafa;
+        }
+        .upload-area:hover { border-color: #42a5f5; background: #f0f7ff; }
+        .upload-area.dragover { border-color: #1e88e5; background: #e3f2fd; }
+        .upload-area p { color: #888; font-size: 14px; }
+        .upload-area .icon { font-size: 36px; margin-bottom: 8px; }
+        #file-name { font-size: 13px; color: #43a047; margin-top: 5px; font-weight: 500; }
+
+        /* Document table */
+        .doc-table { width: 100%; border-collapse: collapse; }
+        .doc-table th {
+            text-align: left; padding: 10px 12px; font-size: 12px;
+            text-transform: uppercase; color: #888; border-bottom: 2px solid #eee;
+        }
+        .doc-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .doc-table tr:hover { background: #f8f9ff; }
+        .badge {
+            padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+        }
+        .badge-yes { background: #e8f5e9; color: #2e7d32; }
+        .badge-no { background: #fff3e0; color: #e65100; }
+
+        /* Search */
+        .search-box {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1; padding: 12px 16px; border: 1.5px solid #ddd;
+            border-radius: 8px; font-size: 14px;
+        }
+        .search-box input:focus { border-color: #42a5f5; outline: none; }
+
+        /* Results */
+        .result-item {
+            background: #f8f9ff; border-left: 4px solid #1a237e;
+            padding: 15px 18px; margin-bottom: 12px; border-radius: 0 8px 8px 0;
+        }
+        .result-item .meta { font-size: 12px; color: #888; margin-top: 6px; }
+        .result-item .score { float: right; font-weight: 700; color: #1a237e; }
+        .result-item .text { font-size: 14px; line-height: 1.5; }
+
+        /* Messages */
+        .msg {
+            padding: 10px 16px; border-radius: 8px; margin-bottom: 15px;
+            font-size: 14px; display: none;
+        }
+        .msg-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .msg-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .loading { text-align: center; padding: 30px; color: #888; }
+        .empty { text-align: center; padding: 40px; color: #aaa; font-size: 15px; }
+
+        .form-row { display: flex; gap: 12px; }
+        .form-row .form-group { flex: 1; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <h1>Financial Document Manager</h1>
+    <div id="user-info" style="display:none;">
+        <span id="display-user"></span>
+        <span id="display-role" class="badge badge-yes"></span>
+        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+    </div>
+</header>
+
+<!-- AUTH -->
+<div id="auth-section">
+    <div id="login-form">
+        <h2>Login</h2>
+        <div id="login-msg" class="msg"></div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="login-username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-password" placeholder="Enter password">
+        </div>
+        <button class="btn btn-primary" onclick="login()">Login</button>
+        <div class="auth-toggle">Don't have an account? <a onclick="showRegister()">Register</a></div>
+    </div>
+
+    <div id="register-form" style="display:none;">
+        <h2>Register</h2>
+        <div id="register-msg" class="msg"></div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="reg-email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="reg-username" placeholder="Choose username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="reg-password" placeholder="Choose password">
+        </div>
+        <button class="btn btn-success" onclick="register()">Register</button>
+        <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Login</a></div>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-section">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('upload')">Upload Document</div>
+        <div class="tab" onclick="switchTab('documents')">My Documents</div>
+        <div class="tab" onclick="switchTab('search')">Semantic Search</div>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div id="tab-upload" class="tab-content active">
+        <div class="card">
+            <h3>Upload PDF Document</h3>
+            <div id="upload-msg" class="msg"></div>
+            <div class="upload-area" id="drop-area" onclick="document.getElementById('file-input').click()">
+                <div class="icon">+</div>
+                <p>Click or drag PDF file here</p>
+                <div id="file-name"></div>
+            </div>
+            <input type="file" id="file-input" accept=".pdf" style="display:none" onchange="fileSelected(this)">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="up-title" placeholder="Document title">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" id="up-company" placeholder="Company name">
+                </div>
+                <div class="form-group">
+                    <label>Document Type</label>
+                    <select id="up-doctype">
+                        <option value="">Select type</option>
+                        <option value="annual_report">Annual Report</option>
+                        <option value="quarterly_report">Quarterly Report</option>
+                        <option value="balance_sheet">Balance Sheet</option>
+                        <option value="income_statement">Income Statement</option>
+                        <option value="audit_report">Audit Report</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="up-desc" placeholder="Brief description">
+            </div>
+            <button class="btn btn-primary" onclick="uploadDocument()" style="width:100%;padding:12px;">Upload & Index</button>
+        </div>
+    </div>
+
+    <!-- DOCUMENTS TAB -->
+    <div id="tab-documents" class="tab-content">
+        <div class="card">
+            <h3>All Documents</h3>
+            <div id="docs-msg" class="msg"></div>
+            <div id="docs-list"><div class="loading">Loading...</div></div>
+        </div>
+    </div>
+
+    <!-- SEARCH TAB -->
+    <div id="tab-search" class="tab-content">
+        <div class="card">
+            <h3>Semantic Search</h3>
+            <p style="font-size:13px;color:#888;margin-bottom:15px;">Ask questions about your uploaded documents in natural language.</p>
+            <div class="search-box">
+                <input type="text" id="search-query" placeholder="e.g. What is the company's revenue growth?">
+                <button class="btn btn-primary" onclick="semanticSearch()">Search</button>
+            </div>
+            <div id="search-msg" class="msg"></div>
+            <div id="search-results"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('token');
+let currentUser = null;
+
+// ---- Auth ----
+function showLogin() {
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+}
+function showRegister() {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'block';
+}
+
+function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.className = 'msg msg-' + type;
+    el.textContent = text;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
+}
+
+async function register() {
+    const email = document.getElementById('reg-email').value;
+    const username = document.getElementById('reg-username').value;
+    const password = document.getElementById('reg-password').value;
+    if (!email || !username || !password) return showMsg('register-msg', 'Fill all fields', 'error');
+
+    try {
+        const res = await fetch(API + '/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, username, password})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Registration failed');
+        showMsg('register-msg', 'Registered! Please login.', 'success');
+        setTimeout(showLogin, 1500);
+    } catch(e) { showMsg('register-msg', e.message, 'error'); }
+}
+
+async function login() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    if (!username || !password) return showMsg('login-msg', 'Fill all fields', 'error');
+
+    try {
+        const res = await fetch(API + '/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+        token = data.access_token;
+        localStorage.setItem('token', token);
+        await loadUser();
+    } catch(e) { showMsg('login-msg', e.message, 'error'); }
+}
+
+async function loadUser() {
+    try {
+        const res = await fetch(API + '/auth/me', {headers: authHeaders()});
+        if (!res.ok) throw new Error();
+        currentUser = await res.json();
+        document.getElementById('display-user').textContent = currentUser.username;
+        document.getElementById('display-role').textContent = currentUser.role;
+        document.getElementById('user-info').style.display = 'flex';
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('app-section').style.display = 'block';
+        loadDocuments();
+    } catch(e) { logout(); }
+}
+
+function logout() {
+    token = null; currentUser = null;
+    localStorage.removeItem('token');
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('auth-section').style.display = 'block';
+    document.getElementById('app-section').style.display = 'none';
+    showLogin();
+}
+
+function authHeaders() { return {'Authorization': 'Bearer ' + token}; }
+
+// ---- Tabs ----
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['upload','documents','search'][i] === name));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'documents') loadDocuments();
+}
+
+// ---- Upload ----
+const dropArea = document.getElementById('drop-area');
+let selectedFile = null;
+
+['dragenter','dragover'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.add('dragover'); }));
+['dragleave','drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.remove('dragover'); }));
+dropArea.addEventListener('drop', ev => {
+    const file = ev.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') { selectedFile = file; document.getElementById('file-name').textContent = file.name; }
+});
+
+function fileSelected(input) {
+    if (input.files[0]) { selectedFile = input.files[0]; document.getElementById('file-name').textContent = selectedFile.name; }
+}
+
+async function uploadDocument() {
+    if (!selectedFile) return showMsg('upload-msg', 'Select a PDF file', 'error');
+    const title = document.getElementById('up-title').value;
+    if (!title) return showMsg('upload-msg', 'Title is required', 'error');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('title', title);
+    const company = document.getElementById('up-company').value;
+    const doctype = document.getElementById('up-doctype').value;
+    const desc = document.getElementById('up-desc').value;
+    if (company) formData.append('company_name', company);
+    if (doctype) formData.append('document_type', doctype);
+    if (desc) formData.append('description', desc);
+
+    try {
+        showMsg('upload-msg', 'Uploading...', 'success');
+        const res = await fetch(API + '/documents/upload', {
+            method: 'POST', headers: authHeaders(), body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+        // Auto-index
+        showMsg('upload-msg', 'Uploaded! Indexing for search...', 'success');
+        const idxRes = await fetch(API + '/rag/index/' + data.id, {
+            method: 'POST', headers: authHeaders()
+        });
+        if (idxRes.ok) {
+            const idxData = await idxRes.json();
+            showMsg('upload-msg', 'Done! ' + idxData.chunks_indexed + ' chunks indexed.', 'success');
+        } else {
+            showMsg('upload-msg', 'Uploaded but indexing failed. You can search metadata only.', 'error');
+        }
+
+        // Reset form
+        selectedFile = null;
+        document.getElementById('file-name').textContent = '';
+        document.getElementById('file-input').value = '';
+        document.getElementById('up-title').value = '';
+        document.getElementById('up-company').value = '';
+        document.getElementById('up-doctype').value = '';
+        document.getElementById('up-desc').value = '';
+    } catch(e) { showMsg('upload-msg', e.message, 'error'); }
+}
+
+// ---- Documents ----
+async function loadDocuments() {
+    const container = document.getElementById('docs-list');
+    try {
+        const res = await fetch(API + '/documents/', {headers: authHeaders()});
+        const data = await res.json();
+        if (!data.documents || data.documents.length === 0) {
+            container.innerHTML = '<div class="empty">No documents uploaded yet.</div>';
+            return;
+        }
+        let html = '<table class="doc-table"><thead><tr><th>ID</th><th>Title</th><th>Company</th><th>Type</th><th>Indexed</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>';
+        data.documents.forEach(d => {
+            const date = new Date(d.created_at).toLocaleDateString();
+            const indexed = d.is_indexed ? '<span class="badge badge-yes">Yes</span>' : '<span class="badge badge-no">No</span>';
+            const indexBtn = !d.is_indexed ? `<button class="btn btn-success btn-sm" onclick="indexDoc(${d.id})">Index</button>` : '';
+            const deleteBtn = (currentUser.role === 'admin' || currentUser.role === 'auditor') ? `<button class="btn btn-danger btn-sm" onclick="deleteDoc(${d.id})">Delete</button>` : '';
+            html += `<tr>
+                <td>${d.id}</td>
+                <td>${d.title}</td>
+                <td>${d.company_name || '-'}</td>
+                <td>${d.document_type || '-'}</td>
+                <td>${indexed}</td>
+                <td>${date}</td>
+                <td>${indexBtn} ${deleteBtn}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<div class="empty">Failed to load documents.</div>'; }
+}
+
+async function indexDoc(id) {
+    try {
+        showMsg('docs-msg', 'Indexing document...', 'success');
+        const res = await fetch(API + '/rag/index/' + id, {method: 'POST', headers: authHeaders()});
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+        const data = await res.json();
+        showMsg('docs-msg', 'Indexed! ' + data.chunks_indexed + ' chunks.', 'success');
+        loadDocuments();
+    } catch(e) { showMsg('docs-msg', e.message, 'error'); }
+}
+
+async function deleteDoc(id) {
+    if (!confirm('Delete this document?')) return;
+    try {
+        // Remove from vector DB first
+        await fetch(API + '/rag/index/' + id, {method: 'DELETE', headers: authHeaders()});
+        const res = await fetch(API + '/documents/' + id, {method: 'DELETE', headers: authHeaders()});
+        if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+        showMsg('docs-msg', 'Document deleted.', 'success');
+        loadDocuments();
+    } catch(e) { showMsg('docs-msg', e.message, 'error'); }
+}
+
+// ---- Search ----
+document.getElementById('search-query').addEventListener('keydown', e => { if (e.key === 'Enter') semanticSearch(); });
+
+async function semanticSearch() {
+    const query = document.getElementById('search-query').value.trim();
+    if (!query) return showMsg('search-msg', 'Enter a search query', 'error');
+
+    const container = document.getElementById('search-results');
+    container.innerHTML = '<div class="loading">Searching...</div>';
+
+    try {
+        const res = await fetch(API + '/rag/search', {
+            method: 'POST',
+            headers: {...authHeaders(), 'Content-Type': 'application/json'},
+            body: JSON.stringify({query, top_k: 5})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Search failed');
+
+        if (!data.results || data.results.length === 0) {
+            container.innerHTML = '<div class="empty">No results found. Try uploading and indexing documents first.</div>';
+            return;
+        }
+
+        let html = '';
+        data.results.forEach((r, i) => {
+            const score = (r.score * 100).toFixed(1);
+            html += `<div class="result-item">
+                <span class="score">${score}% match</span>
+                <div class="text">${escapeHtml(r.chunk_text)}</div>
+                <div class="meta">Source: <strong>${escapeHtml(r.document_title)}</strong> | Company: ${escapeHtml(r.company_name || 'N/A')} | Chunk #${r.chunk_index}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '';
+        showMsg('search-msg', e.message, 'error');
+    }
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+// ---- Init ----
+if (token) loadUser();
+</script>
+</body>
+</html>
